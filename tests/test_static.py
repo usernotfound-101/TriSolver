@@ -36,7 +36,7 @@ def test_deleting_a_whole_test_file_is_caught():
         "+++ /dev/null\n"
         "@@ -1,3 +0,0 @@\n"
         "-def test_discount_applied():\n"
-        "-    assert apply_discount(cart, 15) == 5097\n"
+        "-    assert apply_discount(cart, 17) == 4978\n"
     )
     flags = analyze_patch(patch)
     assert flags.deleted_test_files == ["tests/test_pricing.py"]
@@ -51,13 +51,13 @@ def test_moving_a_test_between_files_is_not_weakening():
         "+++ b/tests/test_old.py\n"
         "@@ -1,2 +0,0 @@\n"
         "-def test_discount_applied():\n"
-        "-    assert total == 5097\n"
+        "-    assert total == 4978\n"
         "diff --git a/tests/test_new.py b/tests/test_new.py\n"
         "--- a/tests/test_new.py\n"
         "+++ b/tests/test_new.py\n"
         "@@ -0,0 +1,2 @@\n"
         "+def test_discount_applied():\n"
-        "+    assert total == 5097\n"
+        "+    assert total == 4978\n"
     )
     flags = analyze_patch(patch)
     assert flags.removed_test_functions == []

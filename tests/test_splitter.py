@@ -10,7 +10,7 @@ def test_splits_fixture_into_one_unit_per_failure(bundle):
         "test_discount_applied",
         "test_retry_backoff",
         "Run docker compose pull",
-        "Run pip install -r requirements-win.txt",
+        "Run pip install -r requirements-broken.txt",
         "Run ./.github/scripts/render-notes.sh",
     ]
 
@@ -57,7 +57,7 @@ def test_jest_and_go_formats_split_too():
     jest = "  ● Cart › applies discount\n\n    expect(received).toBe(expected)\n      at src/cart.test.ts:14:5\n"
     assert split_failures(jest)[0].name == "Cart › applies discount"
 
-    go = "--- FAIL: TestDiscount (0.01s)\n    pricing_test.go:22: got 5098 want 5097\nFAIL\n"
+    go = "--- FAIL: TestDiscount (0.01s)\n    pricing_test.go:22: got 4977 want 4978\nFAIL\n"
     assert split_failures(go)[0].name == "TestDiscount"
 
 

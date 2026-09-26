@@ -8,7 +8,7 @@ index 2c4d6e8..9a1b3c5 100644
  
 -def test_discount_applied():
 -    cart = Cart([Item(sku="widget", unit_cents=1999, qty=3)])
--    assert apply_discount(cart, percent=15) == 5097
+-    assert apply_discount(cart, percent=17) == 4978
 -
 -
  def test_discount_zero_percent_is_noop():

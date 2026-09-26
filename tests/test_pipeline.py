@@ -55,7 +55,7 @@ def test_inbox_mode_writes_a_brief_and_waits(config):
     assert len(result.briefs) == 1
     brief = result.briefs[0].read_text(encoding="utf-8")
     assert "Fix the code. Do not fix the test." in brief
-    assert "AssertionError: assert 5098 == 5097" in brief
+    assert "AssertionError: assert 4977 == 4978" in brief
     assert "integer cents" in brief  # CONTRIBUTING was handed to Bob
     assert result.pending == [result.regressions[0].unit.id]
     assert result.verifications == {}

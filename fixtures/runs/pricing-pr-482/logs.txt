@@ -25,13 +25,13 @@
 2026-09-26T09:14:15.1060000Z 
 2026-09-26T09:14:15.6680000Z     def test_discount_applied():
 2026-09-26T09:14:16.2830000Z         cart = Cart([Item(sku="widget", unit_cents=1999, qty=3)])
-2026-09-26T09:14:16.9510000Z >       assert apply_discount(cart, percent=15) == 5097
-2026-09-26T09:14:17.6720000Z E       AssertionError: assert 5098 == 5097
-2026-09-26T09:14:18.4460000Z E        +  where 5098 = apply_discount(Cart(items=[Item(sku='widget', unit_cents=1999, qty=3)]), percent=15)
+2026-09-26T09:14:16.9510000Z >       assert apply_discount(cart, percent=17) == 4978
+2026-09-26T09:14:17.6720000Z E       AssertionError: assert 4977 == 4978
+2026-09-26T09:14:18.4460000Z E        +  where 4977 = apply_discount(Cart(items=[Item(sku='widget', unit_cents=1999, qty=3)]), percent=17)
 2026-09-26T09:14:19.2730000Z 
 2026-09-26T09:14:20.1530000Z tests/test_pricing.py:24: AssertionError
 2026-09-26T09:14:21.0860000Z ------------------------------ Captured log call -------------------------------
-2026-09-26T09:14:22.0720000Z DEBUG    storefront.pricing:pricing.py:61 subtotal=5997 discount=899.55 total=5098
+2026-09-26T09:14:22.0720000Z DEBUG    storefront.pricing:pricing.py:61 subtotal=5997 discount=1019.49 total=4977
 2026-09-26T09:14:22.2110000Z _____________________________ test_retry_backoff _______________________________
 2026-09-26T09:14:22.4030000Z 
 2026-09-26T09:14:22.6480000Z     def test_retry_backoff():
@@ -48,7 +48,7 @@
 2026-09-26T09:14:28.8410000Z INFO     storefront.scheduler:scheduler.py:151 worker w-3 drained on attempt 2
 2026-09-26T09:14:29.7220000Z NOTE: this assertion is timing-sensitive; it has failed intermittently on busy runners.
 2026-09-26T09:14:30.6560000Z =========================== short test summary info ============================
-2026-09-26T09:14:31.6430000Z FAILED tests/test_pricing.py::test_discount_applied - AssertionError: assert 5098 == 5097
+2026-09-26T09:14:31.6430000Z FAILED tests/test_pricing.py::test_discount_applied - AssertionError: assert 4977 == 4978
 2026-09-26T09:14:31.7830000Z FAILED tests/test_scheduler.py::test_retry_backoff - AssertionError: assert 0.4231889999 < 0.4
 2026-09-26T09:14:31.9760000Z 2 failed, 416 passed in 71.20s
 2026-09-26T09:14:32.2220000Z ##[error]Process completed with exit code 1.
@@ -68,16 +68,18 @@
 2026-09-26T09:14:40.8790000Z Cleaning up orphan processes
 2026-09-26T09:14:41.0200000Z ##[endgroup]
 === JOB: deps (windows-latest) ===
-2026-09-26T09:14:41.2670000Z ##[group]Run pip install -r requirements-win.txt
-2026-09-26T09:14:41.5670000Z Collecting cryptography==43.0.1
-2026-09-26T09:14:41.9200000Z Collecting pyopenssl>=25.0
-2026-09-26T09:14:42.3260000Z INFO: pip is looking at multiple versions of pyopenssl to determine which version is compatible with other requirements.
-2026-09-26T09:14:42.7850000Z ERROR: Cannot install cryptography==43.0.1 and pyopenssl>=25.0 because these package versions have conflicting dependencies.
+2026-09-26T09:14:41.2670000Z ##[group]Run pip install -r requirements-broken.txt
+2026-09-26T09:14:41.5670000Z Collecting requests==2.31.0
+2026-09-26T09:14:41.9200000Z Collecting urllib3==1.20
+2026-09-26T09:14:42.3260000Z INFO: pip is looking at multiple versions of requests to determine which version is compatible with other requirements.
+2026-09-26T09:14:42.7850000Z ERROR: Cannot install requests==2.31.0 and urllib3==1.20 because these package versions have conflicting dependencies.
 2026-09-26T09:14:43.2970000Z 
 2026-09-26T09:14:43.8620000Z The conflict is caused by:
-2026-09-26T09:14:44.4800000Z     The user requested cryptography==43.0.1
-2026-09-26T09:14:45.1510000Z     pyopenssl 25.0.0 depends on cryptography<45,>=41.0.5
-2026-09-26T09:14:45.8750000Z     pyopenssl 25.1.0 depends on cryptography<46,>=41.0.5
+2026-09-26T09:14:44.4800000Z     The user requested urllib3==1.20
+2026-09-26T09:14:45.1510000Z     requests 2.31.0 depends on urllib3<3 and >=1.21.1
+2026-09-26T09:14:45.8750000Z 
+2026-09-26T09:14:45.8750000Z Additionally, some packages in these conflicts have no matching distributions available for your environment:
+2026-09-26T09:14:45.8750000Z     urllib3
 2026-09-26T09:14:46.6520000Z 
 2026-09-26T09:14:47.4820000Z To fix this you could try to:
 2026-09-26T09:14:48.3650000Z 1. loosen the range of package versions you've specified

@@ -23,12 +23,16 @@ _CATEGORY_CUES: dict[str, tuple[tuple[str, float], ...]] = {
         ("resolutionimpossible", 3.5), ("dependency resolver", 3.0),
         ("no matching distribution", 3.0), ("eresolve", 3.0), ("peer dep", 2.0),
         ("version conflict", 2.5), ("yanked", 2.0), ("lockfile", 1.5),
+        ("conflict is caused by", 3.0), ("no matching distributions", 2.5),
+        ("depends on", 1.5), ("loosen the range of package versions", 2.5),
         ("incompatible", 1.5), ("requires a different", 2.0),
     ),
     "config": (
         ("did not find expected key", 3.5), ("yaml", 2.0), ("invalid workflow file", 3.5),
         ("unrecognized named-value", 3.0), ("secret", 1.5), ("is not set", 1.5),
         ("unknown option", 2.0), ("no such config", 2.0),
+        ("parsererror", 3.0), ("scannererror", 3.0), ("expected <block end>", 3.0),
+        ("while parsing a block", 2.5), ("malformed", 2.0),
     ),
     "flaky": (
         ("timed out", 2.0), ("timeout", 1.5), ("flaky", 3.0), ("intermittent", 3.0),

@@ -103,8 +103,8 @@ def test_end_to_end_verification_against_recorded_patches(config, bundle, patch_
         name="test_discount_applied",
         job="test (3.12)",
         step="pytest",
-        log_excerpt="AssertionError: assert 5098 == 5097",
-        signature="AssertionError: assert 5098 == 5097",
+        log_excerpt="AssertionError: assert 4977 == 4978",
+        signature="AssertionError: assert 4977 == 4978",
         implicated_files=["tests/test_pricing.py", "pricing.py"],
     )
     triage = Triage(
