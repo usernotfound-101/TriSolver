@@ -6,3 +6,9 @@ __pycache__/
 work/
 .env
 sandbox/
+slides/*.aux
+slides/*.log
+slides/*.nav
+slides/*.out
+slides/*.snm
+slides/*.toc
