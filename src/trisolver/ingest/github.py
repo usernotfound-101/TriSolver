@@ -41,7 +41,7 @@ def fetch_run(target: str, *, token: str | None) -> RunBundle:
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    with httpx.Client(timeout=_TIMEOUT, follow_redirects=True, headers=headers) as client:
+    with httpx.Client(timeout=_TIMEOUT, follow_redirects=False, headers=headers) as client:
         run = _json(client.get(f"{API}/repos/{slug}/actions/runs/{run_id}"))
         raw_log = _failed_job_logs(client, slug, run_id)
         pr_number = _pr_number(run)
@@ -72,26 +72,66 @@ def _json(response: httpx.Response) -> dict:
     return response.json()
 
 
-def _failed_job_logs(client: httpx.Client, slug: str, run_id: int) -> str:
-    """Download the run's log archive and keep only the jobs that failed.
+def _follow(client: httpx.Client, url: str) -> httpx.Response:
+    """GET a URL, following one redirect *without* leaking credentials.
 
-    The archive holds one text file per job step. Concatenating only the
-    failed jobs, with the ``=== JOB: name ===`` separator the splitter reads,
-    keeps the state we send to Jev focused on what actually broke.
+    The Actions log endpoints answer 302 with a pre-signed blob URL. That URL
+    carries its own authorisation in the query string and rejects the request
+    outright if the GitHub ``Authorization`` header comes along with it, so the
+    hop has to be made by a client that does not have one.
     """
-    jobs = _json(client.get(f"{API}/repos/{slug}/actions/runs/{run_id}/jobs?per_page=100"))
-    failed = {
-        job["name"]
-        for job in jobs.get("jobs", [])
-        if job.get("conclusion") in ("failure", "timed_out", "cancelled")
-    }
+    response = client.get(url)
+    if response.status_code in (301, 302, 303, 307, 308) and "location" in response.headers:
+        with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as anonymous:
+            return anonymous.get(response.headers["location"])
+    return response
 
-    response = client.get(f"{API}/repos/{slug}/actions/runs/{run_id}/logs")
-    if response.status_code != 200:
+
+def _failed_job_logs(client: httpx.Client, slug: str, run_id: int) -> str:
+    """Concatenate the logs of every job that failed, newest API first.
+
+    Fetched per job rather than from the run-level archive. The archive is one
+    request instead of N, but it is produced asynchronously and comes back as a
+    valid, empty, 22-byte zip for a while after a run finishes -- which reads
+    as "this run had no failures" rather than as an error. Per-job logs are
+    available as soon as the job is, and they arrive already scoped to the jobs
+    worth looking at.
+    """
+    jobs = _json(client.get(f"{API}/repos/{slug}/actions/runs/{run_id}/jobs?per_page=100")).get("jobs", [])
+    failed = [j for j in jobs if j.get("conclusion") in ("failure", "timed_out", "cancelled")]
+    if not failed:
         raise RuntimeError(
-            f"Could not download logs for run {run_id}: HTTP {response.status_code}. "
-            "Logs expire after 90 days and need actions:read."
+            f"Run {run_id} has no failed jobs "
+            f"(conclusions: {', '.join(sorted({str(j.get('conclusion')) for j in jobs})) or 'none'}). "
+            "TriSolver triages red runs."
         )
+
+    chunks: list[str] = []
+    unavailable: list[str] = []
+    for job in failed:
+        response = _follow(client, f"{API}/repos/{slug}/actions/jobs/{job['id']}/logs")
+        if response.status_code != 200 or not response.text.strip():
+            unavailable.append(job["name"])
+            continue
+        chunks.append(f"=== JOB: {job['name']} ===\n{response.text}")
+
+    if not chunks:
+        archived = _archive_logs(client, slug, run_id, {j["name"] for j in failed})
+        if archived:
+            return archived
+        raise RuntimeError(
+            f"Run {run_id} failed, but none of its logs are downloadable yet "
+            f"({', '.join(unavailable)}). GitHub finishes uploading them a minute or two "
+            "after a run ends, and deletes them after 90 days. Try again shortly."
+        )
+    return "\n".join(chunks)
+
+
+def _archive_logs(client: httpx.Client, slug: str, run_id: int, failed: set[str]) -> str:
+    """Fallback: the run-level zip, one text file per job step."""
+    response = _follow(client, f"{API}/repos/{slug}/actions/runs/{run_id}/logs")
+    if response.status_code != 200 or not response.content.startswith(b"PK"):
+        return ""
 
     chunks: list[str] = []
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
@@ -103,14 +143,6 @@ def _failed_job_logs(client: httpx.Client, slug: str, run_id: int) -> str:
                 continue
             body = archive.read(name).decode("utf-8", errors="replace")
             chunks.append(f"=== JOB: {job_name} ===\n{body}")
-
-    if not chunks:  # no per-job match; fall back to the whole archive
-        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-            chunks = [
-                archive.read(n).decode("utf-8", errors="replace")
-                for n in sorted(archive.namelist())
-                if n.endswith(".txt")
-            ]
     return "\n".join(chunks)
 
 
@@ -122,21 +154,31 @@ def _pr_number(run: dict) -> int | None:
 
 
 def _pr_diff(client: httpx.Client, slug: str, pr_number: int) -> str:
-    response = client.get(
+    request = client.build_request(
+        "GET",
         f"{API}/repos/{slug}/pulls/{pr_number}",
         headers={"Accept": "application/vnd.github.v3.diff"},
     )
+    response = client.send(request)
+    if response.status_code in (301, 302, 307) and "location" in response.headers:
+        with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as anonymous:
+            response = anonymous.get(response.headers["location"])
     return response.text if response.status_code == 200 else ""
 
 
 def _project_docs(client: httpx.Client, slug: str, ref: str, limit: int = 8000) -> str:
     """Best-effort fetch of the conventions Bob and the gates should respect."""
     for path in ("CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/runbook.md", "RUNBOOK.md"):
-        response = client.get(
+        request = client.build_request(
+            "GET",
             f"{API}/repos/{slug}/contents/{path}",
             params={"ref": ref} if ref else None,
             headers={"Accept": "application/vnd.github.raw"},
         )
+        response = client.send(request)
+        if response.status_code in (301, 302, 307) and "location" in response.headers:
+            with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as anonymous:
+                response = anonymous.get(response.headers["location"])
         if response.status_code == 200 and response.text.strip():
             return response.text[:limit]
     return ""
