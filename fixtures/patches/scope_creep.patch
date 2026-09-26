@@ -1,0 +1,52 @@
+diff --git a/src/storefront/pricing.py b/src/storefront/pricing.py
+index 5d6e7f8..7a9b0c1 100644
+--- a/src/storefront/pricing.py
++++ b/src/storefront/pricing.py
+@@ -58,7 +58,7 @@ def apply_discount(cart: Cart, percent: float) -> int:
+     subtotal = subtotal_cents(cart)
+     discount = subtotal * percent / 100
+     total = subtotal - discount
+-    return int(total)
++    return round(total)
+diff --git a/src/storefront/shipping.py b/src/storefront/shipping.py
+index 3e5f7a9..8b0c2d4 100644
+--- a/src/storefront/shipping.py
++++ b/src/storefront/shipping.py
+@@ -1,9 +1,9 @@
+-import os
+-import sys
+ from dataclasses import dataclass
++import os
++import sys
+ 
+ 
+-@dataclass
++@dataclass(slots=True)
+ class ShippingQuote:
+-    carrier : str
+-    cents   : int
++    carrier: str
++    cents: int
+diff --git a/src/storefront/inventory.py b/src/storefront/inventory.py
+index 1c3e5a7..6d8f0b2 100644
+--- a/src/storefront/inventory.py
++++ b/src/storefront/inventory.py
+@@ -12,8 +12,8 @@ class Inventory:
+     def reserve(self, sku: str, qty: int) -> bool:
+-        if self._stock.get(sku,0) >= qty:
+-            self._stock[sku] -= qty
++        if self._stock.get(sku, 0) >= qty:
++            self._stock[sku] = self._stock[sku] - qty
+             return True
+         return False
+diff --git a/src/storefront/emails.py b/src/storefront/emails.py
+index 4a6c8e0..9f1b3d5 100644
+--- a/src/storefront/emails.py
++++ b/src/storefront/emails.py
+@@ -3,6 +3,6 @@ from email.message import EmailMessage
+ 
+ def build_receipt(order_id: str, total_cents: int) -> EmailMessage:
+     message = EmailMessage()
+-    message["Subject"] = f"Receipt for {order_id}"
++    message["Subject"] = f"Your receipt for order {order_id}"
+     return message

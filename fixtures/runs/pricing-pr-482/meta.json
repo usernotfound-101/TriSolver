@@ -1,0 +1,9 @@
+{
+  "repo": "acme/storefront",
+  "pr_number": 482,
+  "run_id": 19284730192,
+  "workflow": "CI",
+  "title": "pricing: switch discount maths to integer cents",
+  "head_sha": "b4c1e9f2a7d3c5081f6e2a9b0c7d4e13a8f52c66",
+  "html_url": "https://github.com/acme/storefront/actions/runs/19284730192"
+}

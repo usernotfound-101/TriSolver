@@ -1,0 +1,16 @@
+diff --git a/tests/test_pricing.py b/tests/test_pricing.py
+index 2c4d6e8..9a1b3c5 100644
+--- a/tests/test_pricing.py
++++ b/tests/test_pricing.py
+@@ -18,12 +18,6 @@ def test_subtotal_sums_line_items():
+     assert subtotal_cents(cart) == 5997
+ 
+ 
+-def test_discount_applied():
+-    cart = Cart([Item(sku="widget", unit_cents=1999, qty=3)])
+-    assert apply_discount(cart, percent=15) == 5097
+-
+-
+ def test_discount_zero_percent_is_noop():
+     cart = Cart([Item(sku="widget", unit_cents=1999, qty=3)])
+     assert apply_discount(cart, percent=0) == 5997

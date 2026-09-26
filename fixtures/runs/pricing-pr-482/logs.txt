@@ -1,0 +1,92 @@
+=== JOB: test (3.12) ===
+2026-09-26T09:14:03.3080000Z ##[group]Run actions/checkout@v4
+2026-09-26T09:14:03.5510000Z Syncing repository: acme/storefront
+2026-09-26T09:14:03.8470000Z ##[endgroup]
+2026-09-26T09:14:04.1960000Z ##[group]Run actions/setup-python@v5
+2026-09-26T09:14:04.5980000Z Successfully set up CPython (3.12.6)
+2026-09-26T09:14:05.0530000Z ##[endgroup]
+2026-09-26T09:14:05.5610000Z ##[group]Run pip install -e .[dev]
+2026-09-26T09:14:06.1220000Z Successfully installed storefront-2.4.0 pytest-8.3.3
+2026-09-26T09:14:06.7360000Z ##[endgroup]
+2026-09-26T09:14:07.4030000Z ##[group]Run pytest -q --maxfail=0
+2026-09-26T09:14:08.1230000Z ============================= test session starts ==============================
+2026-09-26T09:14:08.8960000Z platform linux -- Python 3.12.6, pytest-8.3.3, pluggy-1.5.0
+2026-09-26T09:14:09.7220000Z rootdir: /home/runner/work/storefront/storefront
+2026-09-26T09:14:10.6010000Z collected 418 items
+2026-09-26T09:14:11.5330000Z 
+2026-09-26T09:14:12.5180000Z tests/test_cart.py ..............                                        [  3%]
+2026-09-26T09:14:12.6560000Z tests/test_pricing.py ....F.....                                         [  6%]
+2026-09-26T09:14:12.8470000Z tests/test_scheduler.py ......F...                                       [  9%]
+2026-09-26T09:14:13.0910000Z tests/test_checkout.py ................................................ [ 21%]
+2026-09-26T09:14:13.3880000Z ........................................................................ [100%]
+2026-09-26T09:14:13.7380000Z 
+2026-09-26T09:14:14.1410000Z =================================== FAILURES ===================================
+2026-09-26T09:14:14.5970000Z ____________________________ test_discount_applied _____________________________
+2026-09-26T09:14:15.1060000Z 
+2026-09-26T09:14:15.6680000Z     def test_discount_applied():
+2026-09-26T09:14:16.2830000Z         cart = Cart([Item(sku="widget", unit_cents=1999, qty=3)])
+2026-09-26T09:14:16.9510000Z >       assert apply_discount(cart, percent=15) == 5097
+2026-09-26T09:14:17.6720000Z E       AssertionError: assert 5098 == 5097
+2026-09-26T09:14:18.4460000Z E        +  where 5098 = apply_discount(Cart(items=[Item(sku='widget', unit_cents=1999, qty=3)]), percent=15)
+2026-09-26T09:14:19.2730000Z 
+2026-09-26T09:14:20.1530000Z tests/test_pricing.py:24: AssertionError
+2026-09-26T09:14:21.0860000Z ------------------------------ Captured log call -------------------------------
+2026-09-26T09:14:22.0720000Z DEBUG    storefront.pricing:pricing.py:61 subtotal=5997 discount=899.55 total=5098
+2026-09-26T09:14:22.2110000Z _____________________________ test_retry_backoff _______________________________
+2026-09-26T09:14:22.4030000Z 
+2026-09-26T09:14:22.6480000Z     def test_retry_backoff():
+2026-09-26T09:14:22.9460000Z         scheduler = Scheduler(base_delay=0.1, jitter=True)
+2026-09-26T09:14:23.2970000Z         started = time.monotonic()
+2026-09-26T09:14:23.7010000Z         scheduler.drain(timeout=2.0)
+2026-09-26T09:14:24.1580000Z >       assert time.monotonic() - started < 0.4
+2026-09-26T09:14:24.6680000Z E       AssertionError: assert 0.4231889999 < 0.4
+2026-09-26T09:14:25.2310000Z E        +  where 0.4231889999 = 1738.9012 - 1738.478
+2026-09-26T09:14:25.8470000Z 
+2026-09-26T09:14:26.5160000Z tests/test_scheduler.py:88: AssertionError
+2026-09-26T09:14:27.2380000Z ------------------------------ Captured log call -------------------------------
+2026-09-26T09:14:28.0130000Z WARNING  storefront.scheduler:scheduler.py:140 worker w-3 did not drain in time, retrying (attempt 2)
+2026-09-26T09:14:28.8410000Z INFO     storefront.scheduler:scheduler.py:151 worker w-3 drained on attempt 2
+2026-09-26T09:14:29.7220000Z NOTE: this assertion is timing-sensitive; it has failed intermittently on busy runners.
+2026-09-26T09:14:30.6560000Z =========================== short test summary info ============================
+2026-09-26T09:14:31.6430000Z FAILED tests/test_pricing.py::test_discount_applied - AssertionError: assert 5098 == 5097
+2026-09-26T09:14:31.7830000Z FAILED tests/test_scheduler.py::test_retry_backoff - AssertionError: assert 0.4231889999 < 0.4
+2026-09-26T09:14:31.9760000Z 2 failed, 416 passed in 71.20s
+2026-09-26T09:14:32.2220000Z ##[error]Process completed with exit code 1.
+2026-09-26T09:14:32.5210000Z ##[endgroup]
+=== JOB: integration ===
+2026-09-26T09:14:32.9260000Z ##[group]Run actions/checkout@v4
+2026-09-26T09:14:33.3840000Z Syncing repository: acme/storefront
+2026-09-26T09:14:33.8950000Z ##[endgroup]
+2026-09-26T09:14:34.4590000Z ##[group]Run docker compose pull
+2026-09-26T09:14:35.0760000Z Pulling postgres ... 
+2026-09-26T09:14:35.7460000Z Pulling redis    ... 
+2026-09-26T09:14:36.4690000Z error pulling image configuration: download failed after attempts=6: received unexpected HTTP status: 429 Too Many Requests
+2026-09-26T09:14:37.2450000Z toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading.
+2026-09-26T09:14:38.0740000Z ##[error]Process completed with exit code 18.
+2026-09-26T09:14:38.9560000Z ##[endgroup]
+2026-09-26T09:14:39.8910000Z ##[group]Post Run actions/checkout@v4
+2026-09-26T09:14:40.8790000Z Cleaning up orphan processes
+2026-09-26T09:14:41.0200000Z ##[endgroup]
+=== JOB: deps (windows-latest) ===
+2026-09-26T09:14:41.2670000Z ##[group]Run pip install -r requirements-win.txt
+2026-09-26T09:14:41.5670000Z Collecting cryptography==43.0.1
+2026-09-26T09:14:41.9200000Z Collecting pyopenssl>=25.0
+2026-09-26T09:14:42.3260000Z INFO: pip is looking at multiple versions of pyopenssl to determine which version is compatible with other requirements.
+2026-09-26T09:14:42.7850000Z ERROR: Cannot install cryptography==43.0.1 and pyopenssl>=25.0 because these package versions have conflicting dependencies.
+2026-09-26T09:14:43.2970000Z 
+2026-09-26T09:14:43.8620000Z The conflict is caused by:
+2026-09-26T09:14:44.4800000Z     The user requested cryptography==43.0.1
+2026-09-26T09:14:45.1510000Z     pyopenssl 25.0.0 depends on cryptography<45,>=41.0.5
+2026-09-26T09:14:45.8750000Z     pyopenssl 25.1.0 depends on cryptography<46,>=41.0.5
+2026-09-26T09:14:46.6520000Z 
+2026-09-26T09:14:47.4820000Z To fix this you could try to:
+2026-09-26T09:14:48.3650000Z 1. loosen the range of package versions you've specified
+2026-09-26T09:14:49.3010000Z 2. remove package versions to allow pip to attempt to solve the dependency conflict
+2026-09-26T09:14:50.2900000Z 
+2026-09-26T09:14:50.4320000Z ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+2026-09-26T09:14:50.6270000Z ##[error]Process completed with exit code 1.
+2026-09-26T09:14:50.8750000Z ##[endgroup]
+=== JOB: release-notes ===
+2026-09-26T09:14:51.2290000Z ##[group]Run ./.github/scripts/render-notes.sh
+2026-09-26T09:14:51.6360000Z ##[error]Invalid workflow file: .github/workflows/release.yml#L41: did not find expected key while parsing a block mapping at line 38 column 7
+2026-09-26T09:14:52.0960000Z ##[endgroup]

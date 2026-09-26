@@ -1,0 +1,25 @@
+[project]
+name = "trisolver"
+version = "0.1.0"
+description = "CI failure triage: split red builds into failure units, classify each with Jev, route on confidence, dispatch real regressions to Bob, and verify Bob's patch before a human ever sees it."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+]
+
+[project.scripts]
+trisolver = "trisolver.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/trisolver"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

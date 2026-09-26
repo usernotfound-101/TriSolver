@@ -1,0 +1,32 @@
+diff --git a/src/storefront/pricing.py b/src/storefront/pricing.py
+index 1a2b3c4..5d6e7f8 100644
+--- a/src/storefront/pricing.py
++++ b/src/storefront/pricing.py
+@@ -52,12 +52,14 @@ def subtotal_cents(cart: Cart) -> int:
+     return sum(item.unit_cents * item.qty for item in cart.items)
+ 
+ 
+ def apply_discount(cart: Cart, percent: float) -> int:
+-    """Return the cart total in cents after a percentage discount."""
+-    subtotal = subtotal_cents(cart)
+-    total = subtotal * (100 - percent) / 100
+-    return int(round(total))
++    """Return the cart total in cents after a percentage discount.
++
++    Discounts are computed in integer cents so repeated application cannot
++    drift, per the pricing RFC.
++    """
++    subtotal = subtotal_cents(cart)
++    discount = subtotal * percent / 100
++    total = subtotal - discount
++    logger.debug("subtotal=%s discount=%s total=%s", subtotal, discount, int(total))
++    return int(total)
+diff --git a/src/storefront/cart.py b/src/storefront/cart.py
+index 9f8e7d6..3c2b1a0 100644
+--- a/src/storefront/cart.py
++++ b/src/storefront/cart.py
+@@ -18,6 +18,7 @@ class Item:
+     sku: str
+     unit_cents: int
+     qty: int = 1
++    note: str | None = None

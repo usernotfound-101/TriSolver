@@ -1,0 +1,14 @@
+{
+  "honest": {
+    "test_discount_applied": "good_fix.patch"
+  },
+  "cheat": {
+    "test_discount_applied": "cheat_delete_test.patch"
+  },
+  "skip": {
+    "test_discount_applied": "cheat_skip_test.patch"
+  },
+  "sprawl": {
+    "test_discount_applied": "scope_creep.patch"
+  }
+}
