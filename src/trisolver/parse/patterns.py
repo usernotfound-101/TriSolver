@@ -11,6 +11,11 @@ import re
 # GitHub prefixes every raw log line with an ISO-8601 timestamp.
 TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T[0-9:.]+Z\s?")
 
+# Real logs are full of colour. Tools detect CI as a terminal and emit SGR
+# codes, which otherwise end up embedded in signatures and burn tokens in
+# every prompt. Matches the whole CSI family, not just \x1b[...m.
+ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
 # Actions workflow commands.
 GROUP_START = re.compile(r"^##\[group\](?P<name>.*)$")
 GROUP_END = re.compile(r"^##\[endgroup\]")
@@ -53,6 +58,11 @@ NOISE_PATH_PARTS = (
 
 def strip_timestamp(line: str) -> str:
     return TIMESTAMP.sub("", line)
+
+
+def clean_line(line: str) -> str:
+    """Normalise one raw log line: drop the timestamp and any colour codes."""
+    return ANSI.sub("", TIMESTAMP.sub("", line))
 
 
 def is_noise_path(path: str) -> bool:

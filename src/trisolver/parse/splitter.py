@@ -24,6 +24,7 @@ _GENERIC_EXIT = re.compile(r"Process completed with exit code|The process .* fai
 
 _CONTEXT_BEFORE = 12
 _CONTEXT_AFTER = 40
+_MAX_STEP_LINES = 300
 
 
 class _Job:
@@ -68,7 +69,7 @@ def _split_jobs(raw_log: str, default_job: str) -> list[_Job]:
     jobs: list[_Job] = []
     current = _Job(default_job)
     for raw_line in raw_log.splitlines():
-        line = P.strip_timestamp(raw_line).rstrip("\r")
+        line = P.clean_line(raw_line).rstrip("\r")
         header = P.JOB_HEADER.match(line)
         if header:
             if current.lines:
@@ -219,7 +220,12 @@ def _split_steps(job: _Job) -> list[FailureUnit]:
         if step in seen_steps:
             continue
         seen_steps.add(step)
-        lo = max(0, i - _CONTEXT_BEFORE)
+        # Reach back to the start of the failing step, not a fixed window.
+        # The only ##[error] a step emits is often the runner's generic
+        # "exit code 1", with the line that actually explains the failure
+        # dozens of lines earlier -- outside any fixed lookback.
+        group_start = max((start for start, _ in job.groups if start <= i), default=0)
+        lo = max(0, min(i - _CONTEXT_BEFORE, max(group_start, i - _MAX_STEP_LINES)))
         hi = min(len(job.lines), i + _CONTEXT_AFTER)
         excerpt = "\n".join(job.lines[lo:hi]).strip()
         units.append(
@@ -272,8 +278,14 @@ def _signature(excerpt: str) -> str:
             score += 3.0
         if P.ERROR_LINE.match(line):
             score += 2.5
-        if re.search(r"\b(?:error|failed|failure|exception)\b", line, re.IGNORECASE):
+        # Not preceded by "-" or a word char, so the "failure" inside
+        # `--show-diff-on-failure` does not make a command echo look like an
+        # error message. A leading "." is fine: dot-leader status lines like
+        # `ruff format.....Failed` are exactly what we want to find.
+        if re.search(r"(?<![-\w/])(?:error|failed|failure|exception)s?\b", line, re.IGNORECASE):
             score += 1.5
+        if re.search(r"\.{3,}\s*(?:failed|error)", line, re.IGNORECASE):
+            score += 2.5
         if re.search(r"\b(?:timeout|timed out|refused|conflict|\d{3} \w)", line, re.IGNORECASE):
             score += 1.0
         if "assert" in line.lower():
@@ -313,11 +325,21 @@ def _find(lines: list[str], regex: re.Pattern[str], start: int = 0) -> int | Non
 
 
 def _dedupe(units: list[FailureUnit]) -> list[FailureUnit]:
-    seen: set[str] = set()
-    out: list[FailureUnit] = []
+    """Collapse the same failure seen in several jobs into one unit.
+
+    A matrix of six Python versions that all fail the same lint hook is one
+    problem, not six. Reporting it six times inflates the board and, worse,
+    would spend six agents on a single fix. The other legs are recorded on
+    the surviving unit so nothing is lost.
+    """
+    by_key: dict[tuple[str, str, str], FailureUnit] = {}
+    order: list[tuple[str, str, str]] = []
     for unit in units:
-        if unit.id in seen:
-            continue
-        seen.add(unit.id)
-        out.append(unit)
-    return out
+        key = (unit.kind, unit.name, unit.signature)
+        existing = by_key.get(key)
+        if existing is None:
+            by_key[key] = unit
+            order.append(key)
+        elif unit.job != existing.job and unit.job not in existing.also_failed_in:
+            existing.also_failed_in.append(unit.job)
+    return [by_key[key] for key in order]

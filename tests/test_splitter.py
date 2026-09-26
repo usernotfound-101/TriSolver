@@ -64,3 +64,68 @@ def test_jest_and_go_formats_split_too():
 def test_empty_log_yields_no_units():
     assert split_failures("") == []
     assert split_failures("everything is fine\n") == []
+
+
+def test_the_same_failure_across_matrix_legs_is_one_unit():
+    """Six Python versions failing the same lint hook is one problem."""
+    log = "\n".join(
+        f"=== JOB: lint ({version}) ===\n"
+        "##[group]Run pre-commit run --all-files\n"
+        "Lint.....................................................................Failed\n"
+        "##[error]Process completed with exit code 1.\n"
+        for version in ("3.10", "3.11", "3.12", "3.13")
+    )
+    units = split_failures(log)
+    assert len(units) == 1
+    assert units[0].job_count == 4
+    assert units[0].all_jobs == ["lint (3.10)", "lint (3.11)", "lint (3.12)", "lint (3.13)"]
+    assert "Failed" in units[0].signature
+
+
+def test_different_failures_in_different_jobs_stay_separate():
+    log = (
+        "=== JOB: lint ===\n##[group]Run lint\nLint.......Failed\n##[error]Process completed with exit code 1.\n"
+        "=== JOB: build ===\n##[group]Run build\nBuild......Failed\n##[error]Process completed with exit code 1.\n"
+    )
+    assert len(split_failures(log)) == 2
+
+
+def test_ansi_colour_codes_are_stripped():
+    """Tools detect CI as a terminal and emit SGR codes into the log."""
+    log = (
+        "=== JOB: lint ===\n"
+        "##[group]Run pre-commit\n"
+        "\x1b[1mruff format\x1b[0m.......\x1b[31mFailed\x1b[0m\n"
+        "##[error]Process completed with exit code 1.\n"
+    )
+    unit = split_failures(log)[0]
+    assert "\x1b" not in unit.log_excerpt
+    assert "[1m" not in unit.signature
+    assert unit.signature == "ruff format.......Failed"
+
+
+def test_signature_ignores_keywords_inside_cli_flags():
+    """`--show-diff-on-failure` is a command echo, not an error message."""
+    log = (
+        "=== JOB: lint ===\n"
+        "##[group]Run pre-commit\n"
+        "pre-commit run --show-diff-on-failure --all-files\n"
+        "ruff format.......Failed\n"
+        "##[error]Process completed with exit code 1.\n"
+    )
+    assert split_failures(log)[0].signature == "ruff format.......Failed"
+
+
+def test_step_excerpt_reaches_back_to_the_start_of_the_step():
+    """The only ##[error] is often the generic exit code, with the real
+    message far above it -- outside any fixed lookback window."""
+    log = (
+        "=== JOB: lint ===\n"
+        "##[group]Run pre-commit\n"
+        "Lint.......Failed\n"
+        + "noise\n" * 60
+        + "##[error]Process completed with exit code 1.\n"
+    )
+    unit = split_failures(log)[0]
+    assert "Lint.......Failed" in unit.log_excerpt
+    assert unit.signature == "Lint.......Failed"

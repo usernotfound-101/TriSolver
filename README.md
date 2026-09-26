@@ -64,7 +64,15 @@ for jobs that died before any test ran. A job that produced test failures is
 not also reported at step level, because "pytest exited 1" is not information.
 
 Signatures are scored, not first-matched — a step that died on a rate limit
-reports `429 Too Many Requests`, not `Process completed with exit code 18`.
+reports `429 Too Many Requests`, not `Process completed with exit code 18`, and
+a keyword inside a CLI flag (`--show-diff-on-failure`) does not make a command
+echo look like an error message. ANSI colour codes are stripped; real logs are
+full of them because tools detect CI as a terminal.
+
+**The same failure across matrix legs is one unit.** Six Python versions
+failing the same lint hook is one problem, not six — reporting it six times
+inflates the board and would spend six agents on a single fix. The other legs
+are recorded on the surviving unit and shown as `x6 jobs`.
 
 ### 3. Triage — Jev
 
@@ -209,16 +217,22 @@ src/trisolver/
 ```
 
 ```bash
-uv run pytest        # 62 tests
+uv run pytest        # 75 tests
 ```
 
 ## Honest limits
 
 - Without `JEV_API_KEY` the classifications are keyword heuristics. They are
   labelled everywhere they appear, and the routing thresholds are tuned for
-  real calibrated probabilities, not for the simulator.
-- Live ingestion is written against the Actions REST API but has only been
-  exercised against recorded fixtures here — no token was available.
+  real calibrated probabilities, not for the simulator. On the four public
+  repos above the simulator lands most units below the confidence floor, so
+  they route to a human — the right behaviour, but a demonstration of the
+  floor rather than of classification quality.
+- Live ingestion is verified against real runs in `psf/requests`,
+  `pydantic/pydantic`, `urllib3/urllib3` and `encode/httpx`. The
+  `usernotfound-101/testrepobob` sandbox could not be used: that account is
+  locked for billing, so its jobs are refused before a runner is assigned and
+  produce no logs at all.
 - The `--bob cli` adapter is a seam for a headless Bob. Bob ships as an IDE
   agent, so `inbox` is the path that actually runs today.
 - The router's thresholds are constants in `config.py`. They are guesses until

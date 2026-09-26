@@ -76,6 +76,7 @@ def render_board(routed: list[Routed], jev_mode: str) -> str:
             + f"  {t.severity_label:<15}"
             + c(f" {_ACTION_LABEL[r.action]:<17}", "bold" if r.action is Action.DISPATCH_TO_BOB else "dim")
             + _truncate(r.unit.name, 40)
+            + (c(f"  x{r.unit.job_count} jobs", "dim") if r.unit.job_count > 1 else "")
         )
         lines.append(c(f"      {_truncate(r.unit.signature, 88)}", "dim"))
         lines.append(c(f"      why: {r.reason}", "dim"))

@@ -75,6 +75,17 @@ class FailureUnit:
     log_excerpt: str
     signature: str = ""
     implicated_files: list[str] = field(default_factory=list)
+    # Other jobs that produced this identical failure -- matrix legs of the
+    # same break. One failure, one brief, however many legs went red.
+    also_failed_in: list[str] = field(default_factory=list)
+
+    @property
+    def job_count(self) -> int:
+        return 1 + len(self.also_failed_in)
+
+    @property
+    def all_jobs(self) -> list[str]:
+        return [self.job, *self.also_failed_in]
 
     def as_text(self, max_chars: int = 6000) -> str:
         body = self.log_excerpt

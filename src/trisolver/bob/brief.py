@@ -18,7 +18,7 @@ _TEMPLATE = """\
 # Fix: {name}
 
 - **unit id**: `{unit_id}`
-- **job / step**: {job} / {step}
+- **job / step**: {job} / {step}{also_failed}
 - **category**: {category} ({confidence:.0%} confidence)
 - **attributed to this PR**: {caused_by_pr:.0%}
 - **severity**: {severity_label} ({severity:.2f})
@@ -82,6 +82,9 @@ def render_brief(routed: Routed, bundle: RunBundle, patch_path: Path) -> str:
         unit_id=unit.id,
         job=unit.job,
         step=unit.step,
+        also_failed=(
+            f"  (same failure in: {', '.join(unit.also_failed_in)})" if unit.also_failed_in else ""
+        ),
         category=triage.category.value,
         confidence=triage.category_confidence,
         caused_by_pr=triage.caused_by_pr,
