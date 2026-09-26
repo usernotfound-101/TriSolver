@@ -278,11 +278,10 @@ def _signature(excerpt: str) -> str:
             score += 3.0
         if P.ERROR_LINE.match(line):
             score += 2.5
-        # Not preceded by "-" or a word char, so the "failure" inside
+        # Not preceded by "-" or "/", so the "failure" inside
         # `--show-diff-on-failure` does not make a command echo look like an
-        # error message. A leading "." is fine: dot-leader status lines like
-        # `ruff format.....Failed` are exactly what we want to find.
-        if re.search(r"(?<![-\w/])(?:error|failed|failure|exception)s?\b", line, re.IGNORECASE):
+        # error message -- while `yaml.parser.ParserError` still does.
+        if re.search(r"(?<![-/])(?:error|failed|failure|exception)s?\b", line, re.IGNORECASE):
             score += 1.5
         if re.search(r"\.{3,}\s*(?:failed|error)", line, re.IGNORECASE):
             score += 2.5

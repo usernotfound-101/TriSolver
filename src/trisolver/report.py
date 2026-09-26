@@ -78,7 +78,8 @@ def render_board(routed: list[Routed], jev_mode: str) -> str:
             + _truncate(r.unit.name, 40)
             + (c(f"  x{r.unit.job_count} jobs", "dim") if r.unit.job_count > 1 else "")
         )
-        lines.append(c(f"      {_truncate(r.unit.signature, 88)}", "dim"))
+        where = f"{r.unit.job} · " if r.unit.kind == "step" else ""
+        lines.append(c(f"      {where}{_truncate(r.unit.signature, 88 - len(where))}", "dim"))
         lines.append(c(f"      why: {r.reason}", "dim"))
     counts: dict[str, int] = {}
     for r in routed:
