@@ -1,0 +1,17 @@
+IBM Bob is the fix-generation stage of TriSolver, and the only component allowed to write code.
+
+HOW IT IS INVOKED. TriSolver triages a failed GitHub Actions run into one unit per failing test or step, and only a high-confidence regression attributed to the pull request reaches Bob. For each one it writes a self-contained brief and calls Bob headlessly:
+
+  bob run --workspace <repo> --mode agent --max-turns 40 --max-cost 2 --format stream-json
+
+Three interchangeable adapters exist: `cli` (headless bob run, used for the run below), `inbox` (briefs on disk for a developer driving Bob interactively), and `fixture` (recorded patches, for deterministic demos). Bob edits the working tree directly; TriSolver snapshots the diff as the proposed patch. Nothing is committed or pushed.
+
+A REAL RUN. Sandbox repo usernotfound-101/testrepobob, CI executed on a self-hosted runner, producing five genuine failures in one build — one regression, one flaky test, a rate-limited registry, an unsatisfiable pip pin, and malformed YAML. TriSolver routed four away from Bob and sent it the one real regression: apply_discount truncating with int() instead of rounding, so a discounted cart was off by one cent (assert 4977 == 4978).
+
+Bob task 3ed0eeca653849ebf227e3d6f843baaf: 149 seconds, 13 tool calls, 0.40 USD. It read the brief, read src/storefront/pricing.py, applied a one-line diff changing `return int(total)` to `return round(total)`, then spent ten execute_command calls getting a working pytest so it could confirm the fix. The test suite passes.
+
+DOCUMENT UNDERSTANDING. The brief embeds the repository's own CONTRIBUTING.md, fetched from GitHub during ingestion. For this repo that text states money is integer cents, that rounding happens once at the end, and that tests must never be deleted or skipped to make CI green. Bob's fix matches that rule exactly. Note that Bob read those conventions through the brief rather than opening CONTRIBUTING.md itself.
+
+VERIFICATION. Bob's output is not trusted. Every patch clears four Jev Noul gates plus an independent, model-free read of the diff, and either signal blocks alone. Bob's real patch scored addresses_failure 0.88, touches_unrelated_files 0.01, weakens_tests 0.04, follows_project_docs 0.82, touched exactly one file, and was surfaced.
+
+SCOPE, STATED PLAINLY. This run spawned no subagents: there was a single regression, so Bob handled it in its main loop. Subagents are enabled and the failure units are independent by construction, so multiple regressions fan out one per subagent, but we have not yet demonstrated that. We do not use watsonx.ai or watsonx Orchestrate.

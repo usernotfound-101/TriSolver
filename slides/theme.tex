@@ -1,0 +1,36 @@
+% Minimal dark beamer theme, sharing the cover's palette.
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{background canvas}{bg=night}
+\setbeamercolor{normal text}{fg=ink}
+\setbeamercolor{structure}{fg=infra}
+\setbeamercolor{frametitle}{fg=ink}
+\setbeamercolor{itemize item}{fg=muted}
+\setbeamercolor{itemize subitem}{fg=muted}
+\setbeamerfont{frametitle}{size=\LARGE,series=\bfseries}
+\setbeamerfont{framesubtitle}{size=\small}
+\setbeamercolor{framesubtitle}{fg=muted}
+\setbeamertemplate{itemize item}{\textcolor{muted}{\raisebox{0.15ex}{\tiny$\blacksquare$}}}
+\setbeamertemplate{itemize subitem}{\textcolor{hair}{\raisebox{0.15ex}{\tiny$\blacksquare$}}}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.55cm}\hspace{0.15cm}%
+  \begin{minipage}{0.95\textwidth}
+    {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle}\\[-0.15em]
+    \ifx\insertframesubtitle\@empty\else
+      {\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}\insertframesubtitle}
+    \fi
+  \end{minipage}\par\vspace{0.1cm}%
+  \hspace{0.16cm}\textcolor{regression}{\rule{1.6cm}{1.6pt}}\par\vspace{0.15cm}}
+
+\setbeamertemplate{footline}{%
+  \hspace{0.55cm}\textcolor{hair}{\tiny TriSolver}\hfill
+  \textcolor{hair}{\tiny\insertframenumber}\hspace{0.55cm}\vspace{0.25cm}}
+
+% Terminal-style box
+\newcommand{\term}[2][0.92\textwidth]{%
+  \begin{tikzpicture}
+    \node[fill=panel, draw=hair, rounded corners=3pt, inner sep=9pt,
+          text width=#1, align=left, font=\ttfamily\scriptsize, text=ink] {#2};
+  \end{tikzpicture}}
