@@ -26,6 +26,19 @@ it. Deciding whether the fix is honest is judgement again, so Jev does that too
 
 ---
 
+## Web app
+
+A Streamlit front end over the same library, running the real pipeline against
+the recorded run:
+
+```bash
+uv run --with streamlit streamlit run streamlit_app.py
+```
+
+Deployed from this repo on Streamlit Community Cloud. It is not a mockup --
+it imports `trisolver`, splits the fixture log, triages it, and puts real
+patches through the real gates in the browser.
+
 ## Quick start
 
 ```bash
