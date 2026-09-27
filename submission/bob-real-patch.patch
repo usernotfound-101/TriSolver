@@ -1,0 +1,10 @@
+diff --git a/src/storefront/pricing.py b/src/storefront/pricing.py
+index f0d11de..d1c8cf6 100644
+--- a/src/storefront/pricing.py
++++ b/src/storefront/pricing.py
+@@ -23,4 +23,4 @@ def apply_discount(cart: Cart, percent: float) -> int:
+     discount = subtotal * percent / 100
+     total = subtotal - discount
+     logger.debug("subtotal=%s discount=%s total=%s", subtotal, discount, total)
+-    return int(total)
++    return round(total)
